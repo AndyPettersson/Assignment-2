@@ -8,6 +8,7 @@ library(MASS)
 library(countreg)
 library(car)
 library(statmod)
+library(AER)
 par( mfrow = c(1,2))
 
 # Poisson (first we use just child, see linear issues then use child and child^2)
@@ -28,6 +29,9 @@ residualPlots(fish.glm.new)
 influenceIndexPlot(fish.glm.new)
 
 rootogram( object = fish.glm.new, plot = TRUE, style = "hanging")
+
+# Testing for overdispersion
+dispersiontest(fish.glm.new)
 
 quasi.fish.glm <- glm(data = fish, count ~ livebait + camper + persons + child, family = quasipoisson())
 summary(quasi.fish.glm)
