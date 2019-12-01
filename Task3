@@ -1,0 +1,11 @@
+data <- read.csv("semiconductor.csv")
+
+lmm.fit <- lmer( y ~ x1 + x2 + x3 + x4 + x5 + x6 + (1 | Device), data=data, REML=TRUE )
+
+res = residuals(lmm.fit)
+
+qqnorm(res, pch = 1)
+qqline(res, col = "steelblue", lwd = 2)
+
+
+MSE.model = mean((fitted(lmm.fit) - data$y)^2)
