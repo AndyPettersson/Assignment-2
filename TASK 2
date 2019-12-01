@@ -33,7 +33,7 @@ rootogram( object = fish.glm.new, plot = TRUE, style = "hanging")
 # Testing for overdispersion
 dispersiontest(fish.glm.new)
 
-quasi.fish.glm <- glm(data = fish, count ~ livebait + camper + persons + child, family = quasipoisson())
+quasi.fish.glm <- glm(data = fish.new, count ~ livebait + camper + persons + child, family = quasipoisson())
 summary(quasi.fish.glm)
 
 # Zero-inflated poisson
