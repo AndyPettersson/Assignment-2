@@ -57,3 +57,8 @@ for(j in 1:4){
       }
   }
 }
+
+
+data.complete %>%
+  mutate(v = 1) %>%
+  spread(mode, v, fill = 0)
