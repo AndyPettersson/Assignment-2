@@ -1,1 +1,42 @@
+install.packages("rattle.data")
+library(rattle.data)
+install.packages("nnet")
+library(nnet)
+data(wine)
+str(wine)
+
+library(tidyverse)
+library(VGAM)
+
+data.complete <- read.csv("modechoice(complete).csv", sep = ";")
+data.complete.missing <- read.csv("modechoice(missing).txt", sep = " ")
+
+
+data.complete <- as.tibble(data.complete)
+
+
+data.complete.car <- filter(data.complete, mode == 4)
+
+
+
+Logit <- glm( choice ~ invc + invt + gc + hinc + psize , family=binomial(link='logit'), data=data.complete.car)
+Logit.quasi <- glm( choice ~ invc + invt + gc + hinc + psize , family=quasibinomial(link='logit'), data=data.complete.car)
+
+summary(Logit)
+summary(Logit.quasi)$dispersion
+
+data.complete <- read.csv("modechoice(complete).csv", sep = ";")
+attach(data.complete)
+# data.complete <- data.complete %>% filter(choice == 1) 
+
+multinom.fit <- multinom(mode ~  ttme + invc + invt + gc + hinc + psize, data = data.complete)
+summary(multinom.fit)
+
+## Table
+table(predict(multinom.fit), mode)
+## Accuracy
+sum(diag(table(predict(multinom.fit), mode))) / sum(table(predict(multinom.fit), mode))
+
+
+head(probability.table <- fitted(multinom.fit))
 
