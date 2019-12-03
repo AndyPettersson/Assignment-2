@@ -40,3 +40,20 @@ sum(diag(table(predict(multinom.fit), mode))) / sum(table(predict(multinom.fit),
 
 head(probability.table <- fitted(multinom.fit))
 
+
+respons <- data.complete %>% filter(choice == 1)
+respons <- respons[2:3]
+
+two <- as.data.frame(matrix(0, 210, 4))
+
+respons[3:6] <- two
+
+colnames(respons) <- c("mode", "choice", "plane", "bus", "train", "car")
+
+for(j in 1:4){
+  for(i in 1:210){
+    if(respons$mode[i] == 1){
+      respons[i,(j+2)] = 1
+      }
+  }
+}
