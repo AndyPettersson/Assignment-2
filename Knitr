@@ -1,1 +1,25 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{sectsty}
+\geometry{margin=3cm}
+\title{Assignment 2}
+\author{Andreas Hild, Andreas Pettersson, Md Ulul Azam Inshafi}
+\date{\today}
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Task 1}
+
+\section{Task 2}
+
+\section{Task 3}
+
+\section{Task 4}
+
+\section{Task 5}
+\end{document}
+
 
