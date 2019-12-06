@@ -12,7 +12,116 @@
 \newpage
 
 \section{Task 1}
+\subsection{1}
+Importing the data
+<<>>==
+data.complete <- read.csv("modechoice(complete).csv", sep = ";")
+data.complete.missing <- read.csv("modechoice(missing).txt", sep = " ")
+data.complete <- as.tibble(data.complete)
+str(data.complete)
+@
+We then create a variable for choosing car. This is to ensure that we have as much data to train the model as possible. In other words, we want the model to consider the alternative costs of the other alternatives. We believe that for example, the cost of taking the plane, or the time of taking the bus influence if a persons decides to take the bus or not. Therefore we do not drop data for the other types of mode. 
+<<>>== 
 
+data.complete$car <- matrix(0, 840, 1)
+
+for(i in 1:840){
+  if(data.complete$mode[i] == 4 && data.complete$choice[i] == 1){
+    data.complete$car[i] = 1
+  }
+}
+@
+Estimating a binary logistic regression where the binary outcome is to either choose or not to choose to use car as a mode of transportation. 
+<<>>==
+Logit <- glm( car ~ invc + invt + gc + hinc + psize , family=binomial(link='logit'), data=data.complete)
+Logit.quasi <- glm( car ~ invc + invt + gc + hinc + psize , family=quasibinomial(link='logit'), data=data.complete)
+@
+
+<<>>==
+summary(Logit)
+summary(Logit.quasi)$dispersion
+@
+By comparing the dispersion of the logit model with and without quasimaximumlikelihood. We do not have an issue with overdispersion.    
+
+\subsection{2}
+
+We will now fit a multinomial logistic regression. The y variable in our regression will consist of a 210 by 4 matrix of dummy variables where a one indicates that the persons decided to go with that mode of transportation. Every row corresponds to an individual and every column corresponds one of the four categories for that variable.  
+<<>>==
+## 2
+
+data.complete.1 <- filter(data.complete, mode == 1)
+data.complete.2 <- filter(data.complete, mode == 2)
+data.complete.3 <- filter(data.complete, mode == 3)
+data.complete.4 <- filter(data.complete, mode == 4)
+
+# Getting the variables in desired format
+y <- cbind(data.complete.1$choice, data.complete.2$choice, data.complete.3$choice, data.complete.4$choice)
+colnames(y) = c("air", "train", "bus", "car")
+@
+
+Inspecting the first 10 observations of the y variable: 
+
+<<>>==
+head(y, n = 10)
+@
+
+Creating the matrices for the covariates: 
+
+<<>>==
+ttme <- cbind(data.complete.1$ttme, data.complete.2$ttme, data.complete.3$ttme, data.complete.4$ttme)
+colnames(ttme) <- c(".1", ".2",".3",".4")
+
+invc <- cbind(data.complete.1$invc, data.complete.2$invc, data.complete.3$invc, data.complete.4$invc)
+colnames(invc) <- c(".1", ".2",".3",".4")
+
+invt <- cbind(data.complete.1$invt, data.complete.2$invt, data.complete.3$invt, data.complete.4$invt)
+colnames(invt) <- c(".1", ".2",".3",".4")
+
+gc <- cbind(data.complete.1$gc, data.complete.2$gc, data.complete.3$gc, data.complete.4$gc)
+colnames(gc) <- c(".1", ".2",".3",".4")
+
+hinc <- data.complete.1$hinc  # we just need one column since they are the same
+
+psize <- data.complete.1$psize  # we just need one column since they are the same
+@
+The ttme variable is dropped since it has only zeroes in one column which the vglm function can't handle. 
+<<>>==
+head(ttme)
+@
+We then run the regression with the remaining covariates. Note that hinc and psize are 210 by 1 matricies since the values for the different categories are the same for every person. 
+<<>>==
+vglm( y ~  invc + invt + gc + hinc + psize,  family=cumulative(link='logitlink', parallel=TRUE) )
+@
+
+\subsection{3}
+
+We will now rerun the models on a dataset with missing values where a mice algorithm is applied. M is set to 5 and the maximum iterations to 100. 
+<<>>==
+## 3
+
+data.complete.missing <- read.csv("modechoice(missing).txt", sep = " ")
+## Running the mice algorithm 
+mice.data <- mice(data.complete.missing, seed=12345, m=5, maxit=100, print=FALSE )
+## Creating the complete dataset
+complete.data.mice <- complete(mice.data, action=2L )
+
+
+
+complete.data.mice$car <- matrix(0, 840, 1)
+
+for(i in 1:840){
+  if(complete.data.mice$mode[i] == 4 && complete.data.mice$choice[i] == 1){
+    complete.data.mice$car[i] = 1
+  }
+}
+
+
+Logit <- glm( car ~ invc + invt + gc + hinc + psize , family=binomial(link='logit'), data=complete.data.mice)
+Logit.quasi <- glm( car ~ invc + invt + gc + hinc + psize , family=quasibinomial(link='logit'), data=complete.data.mice)
+summary(Logit)
+summary(Logit.quasi)$dispersion
+@
+We see that we get slightly different estimates compared to the model in part 1, that the AIC went up a little but that we still have no problem with overdispersion. 
 \section{Task 2}
 
 \section{Task 3}
