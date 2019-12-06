@@ -21,7 +21,6 @@ summary(Logit.quasi)$dispersion
 data.complete <- read.csv("modechoice(complete).csv", sep = ";")
 data.complete <- as.tibble(data.complete)
 
-
 ## 2
 
 data.complete.1 <- filter(data.complete, mode == 1)
@@ -97,5 +96,3 @@ psize <- data.complete.1$psize  # we just need one column since they are the sam
 
 # Model that works
 vglm( y ~  invc + invt + gc + hinc + psize,  family=cumulative(link='logitlink', parallel=TRUE) )
-
-
