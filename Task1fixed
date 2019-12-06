@@ -1,0 +1,94 @@
+library(tidyverse)
+install.packages("VGAM")
+library(VGAM)
+
+data.complete <- read.csv("modechoice(complete).csv", sep = ";")
+data.complete.missing <- read.csv("modechoice(missing).txt", sep = " ")
+
+
+data.complete <- as.tibble(data.complete)
+
+
+Logit <- glm( choice ~ invc + invt + gc + hinc + psize , family=binomial(link='logit'), data=data.complete)
+Logit.quasi <- glm( choice ~ invc + invt + gc + hinc + psize , family=quasibinomial(link='logit'), data=data.complete)
+
+summary(Logit)
+summary(Logit.quasi)$dispersion
+
+data.complete <- read.csv("modechoice(complete).csv", sep = ";")
+data.complete <- as.tibble(data.complete)
+
+data.complete.1 <- filter(data.complete, mode == 1)
+data.complete.2 <- filter(data.complete, mode == 2)
+data.complete.3 <- filter(data.complete, mode == 3)
+data.complete.4 <- filter(data.complete, mode == 4)
+
+# Getting the variables in desired format
+y <- cbind(data.complete.1$choice, data.complete.2$choice, data.complete.3$choice, data.complete.4$choice)
+colnames(y) = c("air", "train", "bus", "car")
+
+ttme <- cbind(data.complete.1$ttme, data.complete.2$ttme, data.complete.3$ttme, data.complete.4$ttme)
+colnames(ttme) <- c(".1", ".2",".3",".4")
+
+invc <- cbind(data.complete.1$invc, data.complete.2$invc, data.complete.3$invc, data.complete.4$invc)
+colnames(invc) <- c(".1", ".2",".3",".4")
+
+invt <- cbind(data.complete.1$invt, data.complete.2$invt, data.complete.3$invt, data.complete.4$invt)
+colnames(invt) <- c(".1", ".2",".3",".4")
+
+gc <- cbind(data.complete.1$gc, data.complete.2$gc, data.complete.3$gc, data.complete.4$gc)
+colnames(gc) <- c(".1", ".2",".3",".4")
+
+hinc <- data.complete.1$hinc  # we just need one column since they are the same
+
+psize <- data.complete.1$psize  # we just need one column since they are the same
+
+
+# Model that works
+vglm( y ~  invc + invt + gc + hinc + psize,  family=cumulative(link='logitlink', parallel=TRUE) )
+
+data.complete.missing <- read.csv("modechoice(missing).txt", sep = " ")
+## Fixing 
+mice.data <- mice(data.complete.missing, seed=12345, m=5, maxit=100, print=FALSE )
+
+complete.data.mice <- complete(mice.data, action=2L )
+
+Logit <- glm( choice ~ invc + invt + gc + hinc + psize , family=binomial(link='logit'), data=complete.data.mice)
+Logit.quasi <- glm( choice ~ invc + invt + gc + hinc + psize , family=quasibinomial(link='logit'), data=complete.data.mice)
+summary(Logit)
+
+
+## Multinomial stuff 
+data.complete <- complete.data.mice
+data.complete <- as.tibble(data.complete)
+
+data.complete.1 <- filter(data.complete, mode == 1)
+data.complete.2 <- filter(data.complete, mode == 2)
+data.complete.3 <- filter(data.complete, mode == 3)
+data.complete.4 <- filter(data.complete, mode == 4)
+
+# Getting the variables in desired format
+y <- cbind(data.complete.1$choice, data.complete.2$choice, data.complete.3$choice, data.complete.4$choice)
+colnames(y) = c("air", "train", "bus", "car")
+
+ttme <- cbind(data.complete.1$ttme, data.complete.2$ttme, data.complete.3$ttme, data.complete.4$ttme)
+colnames(ttme) <- c(".1", ".2",".3",".4")
+
+invc <- cbind(data.complete.1$invc, data.complete.2$invc, data.complete.3$invc, data.complete.4$invc)
+colnames(invc) <- c(".1", ".2",".3",".4")
+
+invt <- cbind(data.complete.1$invt, data.complete.2$invt, data.complete.3$invt, data.complete.4$invt)
+colnames(invt) <- c(".1", ".2",".3",".4")
+
+gc <- cbind(data.complete.1$gc, data.complete.2$gc, data.complete.3$gc, data.complete.4$gc)
+colnames(gc) <- c(".1", ".2",".3",".4")
+
+hinc <- data.complete.1$hinc  # we just need one column since they are the same
+
+psize <- data.complete.1$psize  # we just need one column since they are the same
+
+
+# Model that works
+vglm( y ~  invc + invt + gc + hinc + psize,  family=cumulative(link='logitlink', parallel=TRUE) )
+
+
