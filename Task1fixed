@@ -1,6 +1,9 @@
+## 1
+
 library(tidyverse)
-install.packages("VGAM")
 library(VGAM)
+library(mice)
+library(VIM)
 
 data.complete <- read.csv("modechoice(complete).csv", sep = ";")
 data.complete.missing <- read.csv("modechoice(missing).txt", sep = " ")
@@ -17,6 +20,9 @@ summary(Logit.quasi)$dispersion
 
 data.complete <- read.csv("modechoice(complete).csv", sep = ";")
 data.complete <- as.tibble(data.complete)
+
+
+## 2
 
 data.complete.1 <- filter(data.complete, mode == 1)
 data.complete.2 <- filter(data.complete, mode == 2)
@@ -43,9 +49,9 @@ hinc <- data.complete.1$hinc  # we just need one column since they are the same
 
 psize <- data.complete.1$psize  # we just need one column since they are the same
 
-
-# Model that works
 vglm( y ~  invc + invt + gc + hinc + psize,  family=cumulative(link='logitlink', parallel=TRUE) )
+
+## 3
 
 data.complete.missing <- read.csv("modechoice(missing).txt", sep = " ")
 ## Fixing 
@@ -56,6 +62,7 @@ complete.data.mice <- complete(mice.data, action=2L )
 Logit <- glm( choice ~ invc + invt + gc + hinc + psize , family=binomial(link='logit'), data=complete.data.mice)
 Logit.quasi <- glm( choice ~ invc + invt + gc + hinc + psize , family=quasibinomial(link='logit'), data=complete.data.mice)
 summary(Logit)
+summary(Logit.quasi)
 
 
 ## Multinomial stuff 
