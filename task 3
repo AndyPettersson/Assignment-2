@@ -1,0 +1,117 @@
+library(tidyverse)
+library(lme4)
+library(dhglm)
+library(lmtest) #Likelihood ratio test
+library(cAIC4) #conditional AIC
+
+######3(a)
+#Load the data
+semiconductor <- read_csv("D:/GLM/Assignments/Assignment 2/Task 3/semiconductor.csv")
+summary(semiconductor)
+
+#Creating factors
+names <- c(2:7)
+semiconductor[,names] <- lapply(semiconductor[,names], factor)
+str(semiconductor)
+
+####random intercept
+
+#Model_1
+lmm.fit1 <- lmer( y ~ x1 + x2 + x3 + x4 + x5 + (1 | Device), 
+                  data = semiconductor, REML = TRUE )
+summary(lmm.fit1)
+
+#Variance explained by devices that’s “left over” after the variance explained by our fixed effects.
+#So the differences between devices explain ~79% of the variance that’s “left over” after the variance explained by our fixed effects.
+3.270e-05/(3.270e-05+8.625e-06)*100
+
+cAIC(lmm.fit1)
+
+
+#Model_2
+lmm.fit2 <- lmer( y ~ x1 + x2 + x3 + x4 + x5 + x6 + (1 | Device), 
+                  data = semiconductor, REML = TRUE )
+summary(lmm.fit2)
+
+#Variance explained by devices that’s “left over” after the variance explained by our fixed effects.
+#So the differences between devices explain ~53% of the variance that’s “left over” after the variance explained by our fixed effects.
+9.680e-06/(9.680e-06+8.625e-06)*100
+
+#likelihood ratio test between two nested models
+lrtest(lmm.fit1, lmm.fit2) #lr test suggests that the fit is not significantly different. So we can choose the simple model(lmm.fit1).
+
+cAIC(lmm.fit2) #But, cAIC for model_2(lmm.fit2) is smaller than model_1(lmm.fit1).
+
+
+#MSE of fitted value
+mse1 <- mean((fitted(lmm.fit1) - semiconductor$y)^2)
+mse2 <- mean((fitted(lmm.fit2) - semiconductor$y)^2)
+#mse for model_1 is smaller than model_2
+cbind(mse1*100, mse2*100)
+
+#Prediction
+semiconductor1 <- semiconductor %>% 
+  slice(1:56,)
+
+newdata <- semiconductor %>%
+  slice(57:64,)
+
+model1 <- lmer( y ~ x1 + x2 + x3 + x4 + x5 + (1 | Device), 
+                data = semiconductor1, REML = TRUE )
+pred1 <- predict(model1, newdata, re.form = NA)
+mse.model1 <- mean((pred1 - newdata$y)^2)
+mse.model1*100 #out of sample MSE of model_1 is smaller than model_2
+
+model2 <- lmer( y ~ x1 + x2 + x3 + x4 + x5 + x6 + (1 | Device), 
+                  data = semiconductor1, REML = TRUE )
+pred2 <- predict(model2, newdata, re.form = NA)
+mse.model2 <- mean((pred2 - newdata$y)^2)
+mse.model2*100
+
+model1.lm <- lm(y ~ x1 + x2 + x3 + x4 + x5, data = semiconductor1)
+pred1.lm <- predict(model1.lm, newdata)
+mse.model1.lm <- mean((pred1.lm - newdata$y)^2)
+mse.model1.lm*100 #out of sample MSE of LM is same as LMM, as the point estimation are same for LM and LMM.
+
+######3(b)
+#Gamma linear mixed model with log link
+glmm.fit1 <- glmer( y ~ x1 + x2 + x3 + x4 + x5 + (1 | Device), 
+                   data = semiconductor, 
+                   family = Gamma(link = "log"), nAGQ = 1L )
+summary(glmm.fit1)
+AIC(glmm.fit1) #AIC for using log link is smaller than inverse link
+
+#Gamma linear mixed model with canonical link(inverse link)
+glmm.fit2 <- glmer( y ~ x1 + x2 + x3 + x4 + x5 + (1 | Device), 
+                   data = semiconductor, 
+                   family = Gamma(link = "inverse"), nAGQ = 1L )
+summary(glmm.fit2)
+AIC(glmm.fit2)
+
+####  We need to make sure the approximation is accurate, if possible. Only implemented in lme4 for models with one random effect
+Est <- NULL
+for( no.agq in 1:11 ){
+  
+  cat( 'Estimation with ',no.agq, ' quadrature points.', sep='', '\n' )
+  fit <- glmer( y ~ x1 + x2 + x3 + x4 + x5 + (1 | Device), 
+                data =semiconductor, 
+                family = Gamma(link = "log"), nAGQ = no.agq )
+  Est <- rbind( Est, c(fit@beta,fit@theta))
+  
+}
+
+par( mfrow=c(2,4), mar=c(4.1,4.1,1,1) )
+apply( Est, 2, function(z) plot(1:11,z,type='b', xlab='Number of quadrature points', ylab='Estimates') )
+
+#stabble at nAGQ = 2
+glmm.fit1.n2 <- glmer( y ~ x1 + x2 + x3 + x4 + x5 + (1 | Device), 
+                   data = semiconductor, 
+                   family = Gamma(link = "log"), nAGQ = 2L )
+summary(glmm.fit1.n2)
+AIC(glmm.fit1.n2)
+
+####3(c)
+glmm.fit.d <- glmer( y ~ x1 + x2 + x3 + x4 + x5 + (x2+x3 | Device), 
+                       data = semiconductor, 
+                       family = Gamma(link = "log"), nAGQ = 1L )
+summary(glmm.fit.d)
