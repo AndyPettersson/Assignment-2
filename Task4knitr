@@ -1,0 +1,40 @@
+\section{Task 4}
+Importing the data in order to fit a GAM model.
+<<>>== 
+plasma <- read.csv("Plasma.txt", sep="")
+@
+Inspecting the data
+<<>>==
+str(plasma)
+@
+Plotting the retplasma variable that we want to model. 
+<<>>== 
+hist(plasma$retplasma)
+@
+By looking at our histogram. We conclude that our best bet is to assume that the retplasma follows a Gaussian distribution.  
+\\
+\\
+Further, we want to make the variables sex, smoktat and vituse to factors. 
+
+<<>>==
+names <- c(3:5)
+plasma[,names] <- lapply(plasma[,names], factor)
+@
+
+We will not include the categorical variables in the smooth terms and by trying different values of k, we obtain the best resuls when k is set to 18 and REML method is applied as suggested in the lectures. We also add the interaction effect between cholesterol, fat, age and fibre. A penalized cubic regression spline is set as the smoothing class for the cholesterol, age and fibe variable and the optimal low rank approximation to thin plate spline is applied for the interactin between the variables. We assume that the retplasma variable follows a Gaussian distribution.     
+
+<<>>== 
+# setting k
+k = 18
+GAM.func <- gam(retplasma ~ sex +  smokstat + vituse + s(age, bs = 'tp', k = k ) + s(cholesterol, bs = 'tp', k = k) + s(fibre, bs = 'tp', k = k) + s(cholesterol, bs = 'tp', k = k) + s(cholesterol, fat, age, fibre, bs = 'tp', k = k), family = gaussian, data=plasma, method='REML' )
+summary(GAM.func)
+@
+Analysing the results from our GAM model we see that we have bad performance metrics. The adjusted R squared and the deviance explained (5.8 \%, 12.1\%) are considered to be low which suggests that a GAM model does not fit the data well. We see that edf for the age and cholesterol variable are close to 1 and therefore, we can put these variables outsite of the smoothing terms.   
+
+<<>>== 
+# setting k
+k = 18
+GAM.func <- gam(retplasma ~ sex +  smokstat + vituse + age + cholesterol + s(fibre, bs = 'tp', k = k) + s(cholesterol, bs = 'tp', k = k) + s(cholesterol, fat, age, fibre, bs = 'tp', k = k), family = gaussian, data=plasma, method='REML' )
+summary(GAM.func)
+@
+We see that by putting the age and colesterol variable outside of the smoothing term the deviance explained did not change and the adjusted R squared did just drop by 0.0001\%
