@@ -1,0 +1,78 @@
+library(tidyverse)
+library(mgcv)
+#########4
+plasma <- read.csv("D:/GLM/Assignments/Assignment 2/Task 4/Plasma.txt", sep="")
+
+names <- c(3:5)
+plasma[,names] <- lapply(plasma[,names], factor)
+str(plasma)
+
+newdata <- plasma %>%
+  slice(291:315,)
+
+gam.est1 <- mgcv::gam( retplasma ~ s(cholesterol), 
+                      family = gaussian(), data=plasma[1:290,], 
+                      method = "REML" )
+summary(gam.est1)
+# Visualize the model
+plot(gam.est1, residuals = TRUE, pch = 1)
+
+
+gam.est2 <- mgcv::gam( retplasma ~ s(age) + s(cholesterol), 
+                      family = gaussian(), data=plasma[1:290,], 
+                      method = "REML" )
+summary(gam.est2)
+# Visualize the model
+par(mfrow = c(1,2))
+plot(gam.est2, residuals = TRUE, pch = 1)
+
+
+gam.est3 <- mgcv::gam( retplasma ~ s(age) + sex + s(cholesterol), 
+                       family = gaussian(), data=plasma[1:290,], 
+                       method = "REML" )
+summary(gam.est3)
+# Visualize the model
+par(mfrow = c(2,2))
+plot(gam.est3, all.terms = TRUE, residuals = TRUE, pch = 1)
+
+
+gam.est4 <- mgcv::gam( retplasma ~ s(cholesterol, by = sex), 
+                       family = gaussian(), data=plasma[1:290,], 
+                       method = "REML" )
+summary(gam.est4)
+# Visualize the model
+par(mfrow = c(1,2))
+plot(gam.est4, shade=TRUE, seWithMean=TRUE, scale=0 )
+plot(gam.est4, all.terms = TRUE, residuals = TRUE, pch = 1)
+
+
+gam.est5 <- mgcv::gam( retplasma ~ s(cholesterol, by = sex) + sex, 
+                       family = gaussian(), data=plasma[1:290,], 
+                       method = "REML" )
+summary(gam.est5)
+# Visualize the model
+par(mfrow = c(1,2))
+plot(gam.est5, all.terms = TRUE, shade=TRUE, seWithMean=TRUE, scale=0 )
+plot(gam.est5, all.terms = TRUE, residuals = TRUE, pch = 1)
+
+
+
+gam.est <- mgcv::gam( retplasma ~ s(age) + sex + smokstat 
+                      + vituse + s(fat) + s(fibre) + s(cholesterol), 
+                      family = gaussian(), data=plasma[1:290,], 
+                      method = "REML" )
+summary(gam.est)
+gam.est$sp
+
+pred <- predict.gam(gam.est, newdata)
+mse.model <- mean((pred - newdata$retplasma)^2)
+mse.model*100
+
+plot(gam.est, residuals = TRUE, pch = 1)
+
+gam.check(gam.est)
+
+par( mfrow=c(2,2) )
+plot( gam.est, shade=TRUE, seWithMean=TRUE, scale=0 )
+
+pred <- predict(gam.est)
